@@ -12,8 +12,9 @@ template<class T>
 metamath::linear::sparse_matrix<T> read_matrix(const std::filesystem::path& path) {
     std::ifstream file{path};
     size_t rows = 0;
-    file >> rows;
-    metamath::linear::sparse_matrix<T> matrix{rows, rows};
+    size_t cols = 0;
+    file >> rows >> cols;
+    metamath::linear::sparse_matrix<T> matrix{rows, cols};
     for(const size_t s : std::ranges::iota_view{0zu, rows + 1})
         file >> matrix.portrait.shifts[s];
     matrix.portrait.allocate_indices();
@@ -42,7 +43,7 @@ std::vector<T> solve(const metamath::linear::sparse_matrix<T>& matrix, const std
 static constexpr bool Is_Symmetric = false;
 const auto solver = nonlocal::slae::init_iterative_solver(matrix, Is_Symmetric);
 if (preconditioner_matrix.cols())
-solver->preconditioner(nonlocal::slae::init_eigen_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
+    solver->preconditioner(nonlocal::slae::init_eigen_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
 return solver->solve(right_part);
 }
 
