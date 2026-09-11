@@ -1,0 +1,36 @@
+cmake_minimum_required(VERSION 3.16)
+project(slae_solver)
+
+add_library(slae_solver_lib INTERFACE)
+target_sources(
+    slae_solver_lib
+    INTERFACE #
+        preconditioner_base.hpp
+        identity_preconditioner.hpp
+        diagonal_preconditioner.hpp
+        iterative_solver_base.hpp
+        conjugate_gradient.hpp
+        stable_biconjugate_gradient.hpp
+        gmres.hpp
+)
+target_include_directories(
+    slae_solver_lib
+    INTERFACE #
+        ${LIBRARIES_DIR}
+)
+target_link_libraries(
+    slae_solver_lib
+    INTERFACE #
+        Eigen3::Eigen
+        linear_lib
+        logger_lib
+        parallel_lib
+)
+
+if(ENABLE_OMP)
+    target_link_libraries(
+        slae_solver_lib
+        INTERFACE #
+            OpenMP::OpenMP_CXX
+    )
+endif()

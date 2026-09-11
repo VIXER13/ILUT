@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(parallel)
+
+add_library(parallel_lib STATIC uniform_ranges.cpp MPI_utils.cpp OMP_utils.cpp)
+target_include_directories(
+    parallel_lib
+    PUBLIC #
+        "."
+        ${MPI_C_INCLUDE_DIRS}
+        ${MPI_CXX_INCLUDE_DIRS}
+        
+        ${LIBRARIES_DIR}
+)
+target_link_libraries(
+    parallel_lib
+    PUBLIC #
+        ${MPI_C_LIBRARIES}
+        ${MPI_CXX_LIBRARIES}
+)
+
+if(ENABLE_OMP)
+    target_link_libraries(
+        parallel_lib
+        PUBLIC #
+            OpenMP::OpenMP_CXX
+    )
+endif()
