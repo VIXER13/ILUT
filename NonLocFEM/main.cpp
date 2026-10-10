@@ -20,12 +20,19 @@ try {
     const auto solution1 = nonlocal::solve<T>(matrix, right_part);
     logger::info() << "Solve system with preconditioner" << std::endl;
     const auto solution2 = nonlocal::solve<T>(matrix, right_part, std::move(preconditioner_matrix));
+    logger::info() << "Solve system with ILU0 preconditioner"<< std::endl;
+    const auto solution3 = nonlocal::solve<T>(matrix, right_part, std::move(preconditioner_matrix_ilu0), true);
 
     using namespace metamath::operators;
     static constexpr T Threshold = 1e-10;
     if (const auto error = metamath::linear::norm(solution1 - solution2); error > Threshold)
         logger::error() << "Solutions with a preconditioner do not converge to solutions without a preconditioner."
                         << "The error between solutions: " << error << std::endl;
+
+    if (const auto error = metamath::linear::norm(solution1 - solution3); error > Threshold)
+        logger::error() << "Solutions with a  ILU(0) preconditioner do not converge to solutions without a preconditioner. "
+                        << "The error between solutions: " << error << std::endl;
+
 
     return EXIT_SUCCESS;
 } catch (const std::exception& e) {
