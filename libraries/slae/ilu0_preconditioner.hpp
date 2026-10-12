@@ -36,11 +36,11 @@ class ilu0_preconditioner final : public preconditioner_base<T> {
 
             //для каждой строки ниже
             for (size_t i = k + 1; i < n; i++){
-                if (_matrix.portrait.contains(i, k) == true){
+                if (_matrix.portrait.contains(i, k)){
                     _matrix(i, k) /= _matrix(k, k);
 
                     for (size_t j = k + 1; j < n; j++){
-                        if( _matrix.portrait.contains(i, j) == true && _matrix.portrait.contains(k, j)){
+                        if( _matrix.portrait.contains(i, j) && _matrix.portrait.contains(k, j)){
                             _matrix(i, j) -= _matrix(i, k)*_matrix(k, j);
                         }
                     }
@@ -70,7 +70,7 @@ public:
         //решаем Ly = b 
         for (size_t i = 0; i < n ; i++){
             for (size_t j = 0; j < i ; j++){
-                if (_matrix.portrait.contains(i, j) == True){
+                if (_matrix.portrait.contains(i, j)){
                     y[i] -= _matrix(i, j) * y[j];
                 }
             }
@@ -79,9 +79,9 @@ public:
         // Ux = y
         std::vector<entity_t> x = y;
 
-        for (size_t i = n; i -- >0){
+        for (size_t i = n - 1; i > 0; i--){
             for (size_t j = i + 1; j < n  ; j++){
-                if (_matrix.portrait.contains(i, j) == True){
+                if (_matrix.portrait.contains(i, j)){
                     x[i] -= _matrix(i, j) * x[j];
                 }
             }

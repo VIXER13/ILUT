@@ -13,6 +13,7 @@ try {
     const auto matrix = nonlocal::read_matrix<T>(std::filesystem::path{argv[1]});
     logger::info() << "Read preconditioner matrix" << std::endl;
     auto preconditioner_matrix = nonlocal::read_matrix<T>(std::filesystem::path{argv[2]});
+    auto preconditioner_matrix_ilu0 = nonlocal::read_matrix<T>(std::filesystem::path{argv[2]});
     logger::info() << "Read right part" << std::endl;
     const auto right_part = nonlocal::read_vector<T>(std::filesystem::path{argv[3]});
 
@@ -30,7 +31,7 @@ try {
                         << "The error between solutions: " << error << std::endl;
 
     if (const auto error = metamath::linear::norm(solution1 - solution3); error > Threshold)
-        logger::error() << "Solutions with a  ILU(0) preconditioner do not converge to solutions without a preconditioner. "
+        logger::error() << "Solutions with a ILU(0) preconditioner do not converge to solutions without a preconditioner. "
                         << "The error between solutions: " << error << std::endl;
 
 
