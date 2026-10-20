@@ -1,7 +1,6 @@
 #pragma once
 
 #include "preconditioner_base.hpp"
-#include <concepts>
 
 #include <metamath/linear/sparse_matrix.hpp>
 #include <metamath/linear/fixed_matrix.hpp>
@@ -35,19 +34,22 @@ class ilu0_preconditioner final : public preconditioner_base<T> {
             }
 
             //для каждой строки ниже
-            for (size_t i = k + 1; i < n; i++){
-                if (_matrix.portrait.contains(i, k)){
+            for (const size_t s : _matrix.portrait.shifts_range(k)) {
+                const size_t i = _matrix.portrait.indices[s]; //получили номера столбцов ненулевых элементов
+
+                if (i > k) {
                     _matrix(i, k) /= _matrix(k, k);
 
-                    for (size_t j = k + 1; j < n; j++){
-                        if( _matrix.portrait.contains(i, j) && _matrix.portrait.contains(k, j)){
-                            _matrix(i, j) -= _matrix(i, k)*_matrix(k, j);
+                    for (const size_t t : _matrix.portrait.shifts_range(k)) {
+                        const size_t j = _matrix.portrait.indices[t];
+
+                        if (j > k && _matrix.portrait.contains(i, j)) {
+                            _matrix(i, j) -= _matrix(i, k) * _matrix.values[t];
                         }
                     }
                 }
             }
         }
-
     }
     
 public:
@@ -68,10 +70,12 @@ public:
         const size_t n = _matrix.rows();
         std::vector<entity_t> y = rhs;
         //решаем Ly = b 
+
         for (size_t i = 0; i < n ; i++){
-            for (size_t j = 0; j < i ; j++){
-                if (_matrix.portrait.contains(i, j)){
-                    y[i] -= _matrix(i, j) * y[j];
+            for (const size_t s : _matrix.portrait.shifts_range(i)) {
+                const size_t j = _matrix.portrait.indices[s];
+                if (j < i){
+                    y[i] -= _matrix.values[s] * y[j];
                 }
             }
 
@@ -80,9 +84,10 @@ public:
         std::vector<entity_t> x = y;
 
         for (size_t i = n - 1; i > 0; i--){
-            for (size_t j = i + 1; j < n  ; j++){
-                if (_matrix.portrait.contains(i, j)){
-                    x[i] -= _matrix(i, j) * x[j];
+            for (const size_t s : _matrix.portrait.shifts_range(i)) {
+            const size_t j = _matrix.portrait.indices[s];
+            if(j > i){
+                x[i] -= _matrix.values[s] * x[j];
                 }
             }
             x[i] /= _matrix(i, i);
