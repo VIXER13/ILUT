@@ -17,11 +17,11 @@ std::vector<std::ranges::iota_view<size_t, size_t>> uniform_ranges(const size_t 
     std::vector<std::ranges::iota_view<size_t, size_t>> ranges(ranges_count);
     for(const size_t i : std::ranges::iota_view{0u, last}) {
         const size_t right_bound = left_bound + per_range;
-        ranges[i] = { left_bound, right_bound };
+        ranges[i] = std::views::iota(left_bound, right_bound);
         left_bound = right_bound;
     }
     for(const size_t i : std::ranges::iota_view{last, ranges_count})
-        ranges[i] = { left_bound, size };
+        ranges[i] = std::views::iota(left_bound, size);
     return ranges;
 }
 

@@ -39,12 +39,22 @@ std::vector<T> read_vector(const std::filesystem::path& path) {
 
 template<class T>
 std::vector<T> solve(const metamath::linear::sparse_matrix<T>& matrix, const std::vector<T>& right_part,
-    metamath::linear::sparse_matrix<T>&& preconditioner_matrix = {}) {
+    metamath::linear::sparse_matrix<T>&& preconditioner_matrix = {}, bool use_ilu0 = false){
 static constexpr bool Is_Symmetric = false;
 const auto solver = nonlocal::slae::init_iterative_solver(matrix, Is_Symmetric);
-if (preconditioner_matrix.cols())
-    solver->preconditioner(nonlocal::slae::init_eigen_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
-return solver->solve(right_part);
+if (preconditioner_matrix.cols()){
+    if (use_ilu0){
+        // предобуславливатель ILU(0)
+        solver->preconditioner(nonlocal::slae::init_preconditioner( std::move(preconditioner_matrix), Is_Symmetric));
+    }
+    else{
+        // Предобуславливатель Eigen
+        solver->preconditioner(nonlocal::slae::init_eigen_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
+    }
 }
+
+    return solver->solve(right_part);
+}
+
 
 }

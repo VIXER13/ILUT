@@ -24,16 +24,16 @@ std::vector<std::ranges::iota_view<size_t, size_t>> uniform_ranges(const std::ve
     for(const size_t row : std::ranges::iota_view{0u, rows})
         if (const size_t sum = shifts[row + 1] - shifts[curr_row]; sum >= mean) {
             if (curr_range < ranges_count - 1)
-                ranges[curr_range] = {curr_row, row};
+                ranges[curr_range] = std::views::iota(curr_row, row);
             else {
-                ranges[curr_range] = {curr_row, rows};
+                ranges[curr_range] = std::views::iota(curr_row, rows);
                 break;
             }
             curr_row = row;
             ++curr_range;
         }
     for (const size_t range : std::ranges::iota_view{curr_range, ranges_count}) {
-        ranges[range] = {curr_row, rows};
+        ranges[curr_range] = std::views::iota(curr_row, rows);
         curr_row = rows;
     }
     return ranges;
