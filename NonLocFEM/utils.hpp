@@ -10,16 +10,16 @@ namespace nonlocal {
 
 template<class T>
 metamath::linear::sparse_matrix<T> read_matrix(const std::filesystem::path& path) {
-    std::ifstream file{path};
+    std::ifstream file{ path };
     size_t rows = 0;
     size_t cols = 0;
     file >> rows >> cols;
-    metamath::linear::sparse_matrix<T> matrix{rows, cols};
-    for(const size_t s : std::ranges::iota_view{0zu, rows + 1})
+    metamath::linear::sparse_matrix<T> matrix{ rows, cols };
+    for (const size_t s : std::ranges::iota_view{ 0zu, rows + 1 })
         file >> matrix.portrait.shifts[s];
     matrix.portrait.allocate_indices();
     matrix.allocate_values();
-    for(const size_t s : std::ranges::iota_view{0zu, matrix.non_zeros()}) {
+    for (const size_t s : std::ranges::iota_view{ 0zu, matrix.non_zeros() }) {
         file >> matrix.portrait.indices[s];
         file >> matrix.values[s];
     }
@@ -28,33 +28,37 @@ metamath::linear::sparse_matrix<T> read_matrix(const std::filesystem::path& path
 
 template<class T>
 std::vector<T> read_vector(const std::filesystem::path& path) {
-    std::ifstream file{path};
+    std::ifstream file{ path };
     size_t size = 0;
     file >> size;
     std::vector<T> result(size);
-    for(const size_t i : std::ranges::iota_view{0zu, size})
+    for (const size_t i : std::ranges::iota_view{ 0zu, size })
         file >> result[i];
     return result;
 }
+enum class preconditioner_type { eigen, ilu0, ilut };
 
 template<class T>
 std::vector<T> solve(const metamath::linear::sparse_matrix<T>& matrix, const std::vector<T>& right_part,
-    metamath::linear::sparse_matrix<T>&& preconditioner_matrix = {}, bool use_ilu0 = false){
-static constexpr bool Is_Symmetric = false;
-const auto solver = nonlocal::slae::init_iterative_solver(matrix, Is_Symmetric);
-if (preconditioner_matrix.cols()){
-    if (use_ilu0){
-        // предобуславливатель ILU(0)
-        solver->preconditioner(nonlocal::slae::init_preconditioner( std::move(preconditioner_matrix), Is_Symmetric));
+                     metamath::linear::sparse_matrix<T>&& preconditioner_matrix = {},
+                     preconditioner_type type = preconditioner_type::eigen) {
+    static constexpr bool Is_Symmetric = false;
+    const auto solver = nonlocal::slae::init_iterative_solver(matrix, Is_Symmetric);
+    if (preconditioner_matrix.cols()) {
+
+        if (type == preconditioner_type::ilu0) {
+            // Предобуславливатель ILU(0)
+            solver->preconditioner(nonlocal::slae::init_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
+        } else if (type == preconditioner_type::ilut) {
+            // Предобуславливатель ILUT
+            solver->preconditioner(nonlocal::slae::init_ilut_preconditioner(std::move(preconditioner_matrix)));
+        } else {
+            // Предобуславливатель Eigen
+            solver->preconditioner(nonlocal::slae::init_eigen_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
+        }
     }
-    else{
-        // Предобуславливатель Eigen
-        solver->preconditioner(nonlocal::slae::init_eigen_preconditioner(std::move(preconditioner_matrix), Is_Symmetric));
-    }
-}
 
     return solver->solve(right_part);
 }
 
-
-}
+} // namespace nonlocal
