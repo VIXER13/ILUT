@@ -1,28 +1,34 @@
 #include "utils.hpp"
 
-int main(int argc, char** argv)
-try {
+int main(int argc, char** argv) try {
     if (argc < 4) {
-        logger::info() << "Input format: [program name] /path/to/matrix.txt /path/to/preconditioner_matrix.txt /path/to/right_part.txt" << std::endl;
+        logger::info()
+            << "Input format: [program name] /path/to/matrix.txt /path/to/preconditioner_matrix.txt /path/to/right_part.txt"
+            << std::endl;
         return EXIT_FAILURE;
     }
 
     using T = double;
 
     logger::info() << "Read matrix" << std::endl;
-    const auto matrix = nonlocal::read_matrix<T>(std::filesystem::path{argv[1]});
+    const auto matrix = nonlocal::read_matrix<T>(std::filesystem::path{ argv[1] });
     logger::info() << "Read preconditioner matrix" << std::endl;
-    auto preconditioner_matrix = nonlocal::read_matrix<T>(std::filesystem::path{argv[2]});
-    auto preconditioner_matrix_ilu0 = nonlocal::read_matrix<T>(std::filesystem::path{argv[2]});
+    auto preconditioner_matrix = nonlocal::read_matrix<T>(std::filesystem::path{ argv[2] });
+    auto preconditioner_matrix_ilu0 = nonlocal::read_matrix<T>(std::filesystem::path{ argv[2] });
+    auto preconditioner_matrix_ilut = nonlocal::read_matrix<T>(std::filesystem::path{ argv[2] });
     logger::info() << "Read right part" << std::endl;
-    const auto right_part = nonlocal::read_vector<T>(std::filesystem::path{argv[3]});
+    const auto right_part = nonlocal::read_vector<T>(std::filesystem::path{ argv[3] });
 
     logger::info() << "Solve system without preconditioner" << std::endl;
     const auto solution1 = nonlocal::solve<T>(matrix, right_part);
     logger::info() << "Solve system with preconditioner" << std::endl;
     const auto solution2 = nonlocal::solve<T>(matrix, right_part, std::move(preconditioner_matrix));
-    logger::info() << "Solve system with ILU0 preconditioner"<< std::endl;
-    const auto solution3 = nonlocal::solve<T>(matrix, right_part, std::move(preconditioner_matrix_ilu0), true);
+    logger::info() << "Solve system with ILU0 preconditioner" << std::endl;
+    const auto solution3 =
+        nonlocal::solve<T>(matrix, right_part, std::move(preconditioner_matrix_ilu0), nonlocal::preconditioner_type::ilu0);
+    logger::info() << "Solve system with ILUT preconditioner" << std::endl;
+    const auto solution4 =
+        nonlocal::solve<T>(matrix, right_part, std::move(preconditioner_matrix_ilut), nonlocal::preconditioner_type::ilut);
 
     using namespace metamath::operators;
     static constexpr T Threshold = 1e-10;
@@ -34,7 +40,9 @@ try {
         logger::error() << "Solutions with a ILU(0) preconditioner do not converge to solutions without a preconditioner. "
                         << "The error between solutions: " << error << std::endl;
 
-
+    if (const auto error = metamath::linear::norm(solution1 - solution4); error > Threshold)
+        logger::error() << "Solutions with ILUT preconditioner do not converge to solutions without a preconditioner. "
+                        << "The error between solutions: " << error << std::endl;
     return EXIT_SUCCESS;
 } catch (const std::exception& e) {
     logger::error() << e.what() << std::endl;
